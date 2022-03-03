@@ -1,0 +1,10 @@
+def delete_min(self):
+    if self.root == None:
+        print("트리가 비어 있음")
+    self.root = self.del_min(self.root)
+
+def del_min(self, n):
+    if n.left == None:
+        return n.right
+    n.left = self.del_min(n.left)
+    return n

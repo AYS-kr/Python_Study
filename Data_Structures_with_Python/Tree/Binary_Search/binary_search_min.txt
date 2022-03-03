@@ -1,0 +1,9 @@
+def min(self):
+    if self.root == None:
+        return None
+    return self.minimum(self.root)
+
+def minimum(self,n):
+    if n.left == None:
+        return n
+    return self.minimum(n.left)

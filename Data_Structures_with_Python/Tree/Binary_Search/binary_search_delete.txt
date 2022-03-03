@@ -1,0 +1,22 @@
+def delete(self, k):
+    self.root = self.del_node(self.root, k)
+
+def del_node(self, n, k):
+    if n == None:
+        return None
+    if n.key > k:
+        n.left = self.del_node(n.left, k)
+    elif n.key < k:
+        n.right = self.del_node(n.right, k)
+
+    else:
+        if n.right == None:
+            return n.left
+        if n.left == None:
+            return n.right
+        target = n
+        n = self.minimum(target.right)
+        n.right = self.del_min(target.right)
+        n.left = target.left
+
+    return n

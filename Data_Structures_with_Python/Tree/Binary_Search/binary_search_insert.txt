@@ -1,0 +1,13 @@
+def put(self,key,value):
+    self.root = self.put_item(self.root, key, value)
+
+def put_item(self,n,key,value):
+    if n == None:
+        return Node(key,value)
+    if n.key >key:
+        n.left = self.put_item(n.lef, key, value)
+    elif n.key <key:
+        n.right = zself.put_item(n.right, key, value)
+    else:
+        n.value = value
+    return n
