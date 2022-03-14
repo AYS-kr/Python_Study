@@ -8,7 +8,7 @@ answer = [-1]*A
 
 for i in range(A):
     while stack:
-        if answer[stack[-1]] < A_li[i]:
+        if A_li[stack[-1]] < A_li[i]:
             answer[stack.pop()] = A_li[i]
         else :
             break
