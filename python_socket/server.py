@@ -1,6 +1,6 @@
 import socket
 from _thread import *
-from traceback import print_tb
+import sys
 
 # 서버에 접속한 클라이언트 목록
 client_sockets=[]
@@ -35,6 +35,9 @@ def threaded(client_socket, addr):
         except ConnectionResetError as e:
             print('>> Disconnected by ' + addr[0], ':', addr[1])
             break
+        except ConnectionAbortedError as e:
+            print(">> ConnectionAbortedError")
+            break
     if client_socket in client_sockets :
         client_sockets.remove(client_socket)
         print('remove client list : ',len(client_sockets))
@@ -63,6 +66,7 @@ try:
         
 except Exception as e :
     print ('에러는 : ',e)
-
-finally:
+except KeyboardInterrupt:
+    print("KeyboradInterrupt!!! \n shutdown program!!!")
     server_socket.close()
+    sys.exit(0)
