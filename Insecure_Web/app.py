@@ -88,10 +88,6 @@ def register():
         id = request.form.get('reg_id')
         pwd = request.form.get('reg_passwd')
         name = request.form.get('name')
-        print(id)
-        print(type(id))
-        print(pwd)
-        print(type(pwd))
         # sql 연결 및 실행
         db = dbcon()
         c = db.cursor()
