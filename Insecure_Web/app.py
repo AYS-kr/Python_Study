@@ -84,15 +84,20 @@ def login():
 @app.route('/register',methods=['GET','POST'])
 def register():
     error = None
-    print('test')
     if request.method == 'POST':
-        id = request.form.get('id')
-        pwd = request.form.get('password')
-
+        id = request.form.get('reg_id')
+        pwd = request.form.get('reg_passwd')
+        name = request.form.get('name')
+        print(id)
+        print(type(id))
+        print(pwd)
+        print(type(pwd))
         # sql 연결 및 실행
         db = dbcon()
         c = db.cursor()
-        c.execute("INSERT INTO member VALUES (" + id + "," + pwd + ")")
+        query = "INSERT INTO member VALUES ( '" + id + "','" + pwd + "','" + name + "')"
+        print(query)
+        c.execute(query)
         data = c.fetchall()
         if not data:
             db.commit()
@@ -107,7 +112,7 @@ def register():
 if __name__ == "__main__":
     conn = dbcon()
     print ("Opened database successfully")
-    conn.execute('CREATE TABLE IF NOT EXISTS member (id varchar(50), passwd varchar(50))')
+    conn.execute('CREATE TABLE IF NOT EXISTS member (id varchar(50), passwd varchar(50), nickname varchar(50))')
     print ("Table created successfully")
     conn.close()
     app.run()
