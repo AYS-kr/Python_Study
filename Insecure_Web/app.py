@@ -1,38 +1,48 @@
-import os
-from flask import Flask, render_template, redirect, url_for, request
+import sys,os
+from flask import Flask, render_template, redirect, url_for, request, flash
 import sqlite3
+
 
  # DB 연결
 def dbcon():
-    return sqlite3.connect('./mydb.db')
+    return sqlite3.connect(os.path.dirname(os.path.realpath(__file__))+'/mydb.db')
 
+# 실행 시 DB 초기화
 def create_db():
     try:
-        db = dbcon()
-        c = db.cursor()
-        c.execute("CREATE TABLE member (id varchar(50), passwd varchar(50))")
-        c.execute("INSERT INTO member VALUES ( admin, admin)")
-        db.commit()
+        conn = dbcon()
+        print ("Opened database successfully")
+        c = conn.cursor()
+        c.execute('CREATE TABLE IF NOT EXISTS member (id varchar(50) PRIMARY KEY NOT NULL, passwd varchar(50) NOT NULL, nickname varchar(50) NOT NULL)')
+        print ("Table created successfully")
+        c.execute("INSERT INTO member VALUES ( 'admin', 'admin','admin')")
+        print ("Insert Admin")
+        conn.commit()
     except Exception as e:
         print('db error: ',e)
     finally:
-        db.close()
-        
-def insert_data(id, passwd):
+        conn.close()
+
+# Register를 통해 DB에 데이터 삽입
+def insert_data(id, passwd, name):
     try:
         db = dbcon()
         c = db.cursor()
-        #setdata = (id,passwd)
-        c.execute("INSERT INTO member VALUES (" + id + "," + passwd + ")")
+        query = "INSERT INTO member VALUES ( '" + id + "','" + passwd + "','" + name + "')"
+        c.execute(query)
         db.commit()
-        data = c.fetchall()
+        c.fetchall()
+        print("Insert data() : id=" + id + "\tpassword = "+ passwd + "\tname = " + name)
     except Exception as e:
         print('db error [inesert_data()] : ', e)
-    finally:
-        
+        db.rollback()
         db.close()
-        return data
+        return False
+    else:
+        db.close()
+        return True
 
+# 나중에 사용 예정
 def select_all():
     ret = list()
     try:
@@ -45,13 +55,13 @@ def select_all():
     finally:
         db.close()
         return ret
-    
+
+# 나중에 사용 예정
 def select_id(id):
     ret = ()
     try :
         db = dbcon()
         c = db.cursor()
-        #setdata = (id, )
         c.execute('SELECT * FROM member WHERE id = ' + id)
         ret = c.fetchall()
     except Exception as e:
@@ -62,6 +72,7 @@ def select_id(id):
  
 
 app = Flask(__name__)
+app.secret_key = 'random string'
 
 @app.route('/', methods=['GET'])
 def index():
@@ -88,28 +99,19 @@ def register():
         id = request.form.get('reg_id')
         pwd = request.form.get('reg_passwd')
         name = request.form.get('name')
-        # sql 연결 및 실행
-        db = dbcon()
-        c = db.cursor()
-        query = "INSERT INTO member VALUES ( '" + id + "','" + pwd + "','" + name + "')"
-        print(query)
-        c.execute(query)
-        data = c.fetchall()
-        if not data:
-            db.commit()
+        
+        if insert_data(id,pwd,name):
             print('register Success!')
             return redirect(url_for('index'))
         else:
-            db.rollback()
-            return "Register Failed"
+            flash("Register Failed")
+            return redirect(url_for('register'))
+
 
     return render_template('register.html', error=error)
 
 if __name__ == "__main__":
-    conn = dbcon()
-    print ("Opened database successfully")
-    conn.execute('CREATE TABLE IF NOT EXISTS member (id varchar(50), passwd varchar(50), nickname varchar(50))')
-    print ("Table created successfully")
-    conn.close()
+    dbcon()
+    create_db()
     app.run()
    

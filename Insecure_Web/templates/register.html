@@ -1,3 +1,10 @@
+{%with messages = get_flashed_messages()%}
+{%if messages %}
+  <script type="text/javascript">
+    alert("{{messages[-1]}}");
+  </script>
+  {%endif%}
+{%endwith%}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -5,7 +12,7 @@
         <title>Insecure Web Register</title>
     </head>
     <body>
-        <form method="POST">
+        <form method="POST" id="joinform">
             <div>
                 <h3> Register</h3>
                 <p>
@@ -25,3 +32,27 @@
         </form>
     </body>
 </html>
+<script type="text/javascript">
+    var f = document.getElementById("joinform");
+    f.addEventListener("submit" , function(e) {
+      if(f.id.value.length == 0 ) {
+        alert("Please enter your ID");
+        e.preventDefault();
+        f.id.focus();
+        return;
+      }
+      if(f.nickname.value.length == 0 ) {
+        alert("Please enter your Nickname");
+        e.preventDefault();
+        f.nickname.focus();
+        return;
+      }
+      if(f.password.value.length == 0 ) {
+        alert("Please enter your Password");
+        e.preventDefault();
+        f.password.focus();
+        return;
+      }
+    });
+  
+  </script>
