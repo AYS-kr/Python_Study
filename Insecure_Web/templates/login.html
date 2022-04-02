@@ -1,3 +1,11 @@
+{%with messages = get_flashed_messages()%}
+{%if messages %}
+  <script type="text/javascript">
+    alert("{{messages[-1]}}");
+  </script>
+  {%endif%}
+{%endwith%}
+<!DOCTYPE html
 <html>
     <head>
         <meta charset="UTF-8">
@@ -8,9 +16,7 @@
             <h1> Hello </h1>
         </p>
         <h3> Sign-In </h3>
-        {% comment %} <p>
-            <strong>Do not sql injection in this page!</strong>
-        </p> {% endcomment %}
+
         <form action="" method="post">
             <input type="text" placeholder="Username" name="username">
             <input type="password" placeholder="Password" name="password">

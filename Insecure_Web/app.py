@@ -1,5 +1,6 @@
+from datetime import timedelta
 import sys,os
-from flask import Flask, render_template, redirect, url_for, request, flash
+from flask import Flask, render_template, redirect, url_for, request, flash, session
 import sqlite3
 
 
@@ -70,26 +71,57 @@ def select_id(id):
         db.close()
         return ret
  
+def check_passwd(id,input_passwd):
+    pqsswd = ()
+    try:
+        db = dbcon()
+        c = db.cursor()
+        query = "SELECT passwd FROM member where id = '" + id + "'"
+        c.execute(query)
+        passwd = c.fetchall()
+        print(passwd)
+    except Exception as e:
+        print('db error [check_passwd()] : ',e)
+    else:
+        if passwd == input_passwd:
+            print("Password Correct!")
+            return True
+        else:
+            print("X")
+            return False
 
 app = Flask(__name__)
-app.secret_key = 'random string'
+app.secret_key = 'this is secret key'
+# 세션 지속 시간 10분
+app.config["PERMANET_SESSION_LIFETIME"] = timedelta(minutes=10)
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html')
+    userid = session.get('userid',None)
+    if 'username' in session:
+        flash("환영합니다! " + id + '님')
+        
+    return render_template('index.html', userid=userid)
 
-@app.route('/secret')
-def secret():
-    return "Secret"
+@app.route('/logout')
+def logout():
+    # logout and redirect ro index page
+    session.pop("username",None)
+    return redirect(url_for('index'))
 
 @app.route('/login', methods=['GET','POST'])
 def login():
     error = None
     if request.method == 'POST':
-        if request.form['username'] != 'admin' or request.form['password'] != 'admin':
-            error = 'Try again'
+        id = request.form.get('username')
+        passwd = request.form.get('password')
+        if check_passwd(id,passwd):
+            session['userid'] = id
+            flash('환영합니다 '+id+'님')
+            return redirect(url_for('index'))
         else:
-            return redirect(url_for('secret'))
+            flash('정보가 틀립니다')
+            return redirect(url_for('index'))
     return render_template('login.html',error=error)
 
 @app.route('/register',methods=['GET','POST'])
@@ -99,12 +131,14 @@ def register():
         id = request.form.get('reg_id')
         pwd = request.form.get('reg_passwd')
         name = request.form.get('name')
-        
+        if not (id and pwd and name):
+            flash("빈칸이 존재합니다")
+            return redirect(url_for('register'))
         if insert_data(id,pwd,name):
             print('register Success!')
             return redirect(url_for('index'))
         else:
-            flash("Register Failed")
+            flash(id + "가 존재합니다")
             return redirect(url_for('register'))
 
 
