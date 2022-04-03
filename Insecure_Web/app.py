@@ -107,6 +107,7 @@ def logout():
 
 @app.route('/homepage')
 def homepage():
+    # 게시판 등 로그아웃 구현
     userid = session.get('userid',None)
     if 'username' in session:
         flash("환영합니다! " + id + '님')
