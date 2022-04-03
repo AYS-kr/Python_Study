@@ -72,22 +72,21 @@ def select_id(id):
         return ret
  
 def check_passwd(id,input_passwd):
-    pqsswd = ()
     try:
         db = dbcon()
         c = db.cursor()
         query = "SELECT passwd FROM member where id = '" + id + "'"
+        query = f"SELECT nickname from member WHERE id='{id}' AND passwd = '{input_passwd}';"
         c.execute(query)
-        passwd = c.fetchall()
-        print(passwd)
     except Exception as e:
         print('db error [check_passwd()] : ',e)
     else:
-        if passwd == input_passwd:
+        # 쿼리 결과문이 리스트로 나옴
+        if c.fetchall():
             print("Password Correct!")
             return True
         else:
-            print("X")
+            print("Password Incorrect")
             return False
 
 app = Flask(__name__)
@@ -97,11 +96,7 @@ app.config["PERMANET_SESSION_LIFETIME"] = timedelta(minutes=10)
 
 @app.route('/', methods=['GET'])
 def index():
-    userid = session.get('userid',None)
-    if 'username' in session:
-        flash("환영합니다! " + id + '님')
-        
-    return render_template('index.html', userid=userid)
+    return render_template('index.html')
 
 @app.route('/logout')
 def logout():
@@ -109,20 +104,29 @@ def logout():
     session.pop("username",None)
     return redirect(url_for('index'))
 
+
+@app.route('/homepage')
+def homepage():
+    userid = session.get('userid',None)
+    if 'username' in session:
+        flash("환영합니다! " + id + '님')
+    return render_template('homepage.html', userid=userid)
+
+
 @app.route('/login', methods=['GET','POST'])
 def login():
-    error = None
     if request.method == 'POST':
         id = request.form.get('username')
         passwd = request.form.get('password')
         if check_passwd(id,passwd):
             session['userid'] = id
-            flash('환영합니다 '+id+'님')
-            return redirect(url_for('index'))
+            return redirect(url_for('homepage'))
         else:
             flash('정보가 틀립니다')
             return redirect(url_for('index'))
-    return render_template('login.html',error=error)
+    elif request.method == 'GET':
+        return render_template('login.html')
+    return render_template('login.html')
 
 @app.route('/register',methods=['GET','POST'])
 def register():

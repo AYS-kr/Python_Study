@@ -1,0 +1,25 @@
+{%with messages = get_flashed_messages()%}
+{%if messages %}
+  <script type="text/javascript">
+    alert("{{messages[-1]}}");
+  </script>
+  {%endif%}
+{%endwith%}
+<!DOCTYPE html
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Welcome to Insecure Web!</title>
+    </head>
+    <body>
+        <button > log out </button>
+        <p>
+            <h1> Hello </h1>
+        </p>
+        <h3> This is Insecure Web </h3>
+        <strong> Nice to meet you {{userid}} </strong>
+        <button> board </button>
+
+    </div>
+</body>
+</html>
