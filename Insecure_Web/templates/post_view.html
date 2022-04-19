@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Insecure Web - post_view</title>
+
+</head>
+ 
+<body>
+    <table border = 1>
+    <th colspan=3>{{data.num}}번 글</td>
+        <tr>
+            <td>제목<td>작성자</td><td>작성 시간</td>
+        </tr>
+        <tr>
+            <td>{{data.title}}</td>
+            <td>{{data.id}}</td>
+            <td>{{data.time}}</td>
+        </tr>
+        <tr>
+            <td>내용</td>
+            <td>{{data.content|safe}}<td>
+        </tr>
+    </table>
+
+</body>
+ 
+</html>

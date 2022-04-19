@@ -12,14 +12,25 @@
         <title>Welcome to Insecure Web!</title>
     </head>
     <body>
-        {% comment %} 로그아웃 구현하기 {% endcomment %}
-        <button > log out </button>
+      <h3> This is Insecure Web Main Page</h3>
+      <div class=form-group>
+        {%if userid%}
+          <strong>{{userid}}</strong>
+          <button type="button" onclick="location.href='/logout'"> 로그아웃 </button>
+          <p>
+              <h1> Hello </h1>
+          </p>
+          <strong> Nice to meet you {{userid}} </strong>
+        </br>
         <p>
-            <h1> Hello </h1>
+          게시판으로 이동
+          <a href="board"> board  </button>
         </p>
-        <h3> This is Insecure Web </h3>
-        <strong> Nice to meet you {{userid}} </strong>
-        <button> board  </button>
+        {%else%}
+          <h1> You need to login! </h1>
+          <a href="login">login page</a>
+        {%endif%}
+      </div>
 
     </div>
 </body>
