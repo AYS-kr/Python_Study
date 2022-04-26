@@ -12,20 +12,24 @@
         <title>Welcome to Insecure Web!</title>
     </head>
     <body>
-      <h3> This is Insecure Web Main Page</h3>
       <div class=form-group>
         {%if userid%}
           <strong>{{userid}}</strong>
           <button type="button" onclick="location.href='/logout'"> 로그아웃 </button>
           <p>
-              <h1> Hello </h1>
+              <h1> This is Insecure Web Main Page</h1>
           </p>
           <strong> Nice to meet you {{userid}} </strong>
         </br>
         <p>
-          게시판으로 이동
-          <a href="board"> board  </button>
+          No Filter 게시판으로 이동<br>
+          <a href="board"> No Filter board  </a>
         </p>
+        <p>
+          Low Level Filter 게시판으로 이동<br>
+          <a href="low_board"> Low Level Filter board  </a>
+        </p>
+
         {%else%}
           <h1> You need to login! </h1>
           <a href="login">login page</a>

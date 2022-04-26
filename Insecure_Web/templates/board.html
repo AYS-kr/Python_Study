@@ -11,22 +11,32 @@
     <meta charset="UTF-8">
     <title>Insecure Web - Home</title>
     <style>
-        table {
-            width: 100%;
-            border-top: 1px solid #444444;
+        table.type09 {
             border-collapse: collapse;
-        }
-        th, td {
-            border-bottom: 1px solid #444444;
+            text-align: left;
+            line-height: 1.5;
+          }
+          table.type09 thead th {
             padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: #bbdefb;
-        }
-        td {
-            background-color: #e3f2fd;
-        }
+            font-weight: bold;
+            vertical-align: top;
+            color: #369;
+            border-bottom: 3px solid #036;
+          }
+          table.type09 tbody th {
+            width: 150px;
+            padding: 10px;
+            font-weight: bold;
+            vertical-align: top;
+            border-bottom: 1px solid #ccc;
+            background: #f3f6f7;
+          }
+          table.type09 td {
+            width: 350px;
+            padding: 10px;
+            vertical-align: top;
+            border-bottom: 1px solid #ccc;
+          }
 </style>
 </head>
  
@@ -34,8 +44,9 @@
     <p>
         <h1> Hello {{name}} ! </h1>
     </p>
- 
-    <table class="table">
+    <button type="button" onclick="location.href='/logout'"> 로그아웃 </button>
+    <button type="button" onclick="location.href='/board/write'"> 글 작성 </button>
+    <table class="type09">
         <tr>
             <th>글번호</th>
             <th>작성자</th>
@@ -46,7 +57,7 @@
         <tbody>
             <tr>
                 <td>{{obj.num}}</td>
-                <td><a href="/board_view/{{obj.num}}">{{obj.id}}</a></td>
+                <td><a href="/board/{{obj.num}}">{{obj.id}}</a></td>
                 <td>{{obj.title}}</td>
                 <td>{{obj.time}}</td>
             </tr>

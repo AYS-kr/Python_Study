@@ -3,7 +3,7 @@ import sys,os
 from tkinter import EXCEPTION
 from flask import Flask, render_template, redirect, url_for, request, flash, session
 import sqlite3
-
+import html
 
  # DB  연결
 def dbcon():
@@ -17,7 +17,12 @@ def create_db():
         c = conn.cursor()
         c.execute('CREATE TABLE IF NOT EXISTS member (id varchar(50) PRIMARY KEY NOT NULL, passwd varchar(50) NOT NULL, nickname varchar(50) NOT NULL)')
         print ("'member' Table created successfully")
-        c.execute('CREATE TABLE IF NOT EXISTS board (num INTEGER PRIMARY KEY AUTOINCREMENT,id TEXT NOT NULL,title TEXT NOT NULL, content TEXT, reg_date DEFAULT CURRENT_TIMESTAMP NOT NULL)')
+        query = '''CREATE TABLE IF NOT EXISTS board (
+        num INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT NOT NULL,title TEXT NOT NULL, 
+        content TEXT, 
+        reg_date DATETIME DEFAULT (datetime('now','localtime'))) '''
+        c.execute(query)
         print ("'board' Table created successfully")
         c.execute("INSERT INTO member VALUES ( 'admin', 'admin','admin')")
         print ("Insert Admin")
@@ -38,7 +43,7 @@ def create_db():
         conn.close()
 
 # Register를 통해 DB에 데이터 삽입
-def insert_data(id, passwd, name):
+def insert_data_member(id, passwd, name):
     try:
         db = dbcon()
         c = db.cursor()
@@ -48,7 +53,7 @@ def insert_data(id, passwd, name):
         c.fetchall()
         print("Insert data() : id=" + id + "\tpassword = "+ passwd + "\tname = " + name)
     except Exception as e:
-        print('db error [inesert_data()] : ', e)
+        print('db error [insert_data_member()] : ', e)
         db.rollback()
         db.close()
         return False
@@ -126,6 +131,25 @@ def read_post(num):
     except Exception as e:
         print('db error [read_post()] : ',e)
 
+# 글 작성 함수
+def insert_data_board(id, subject, content):
+    try:
+        db = dbcon()
+        print ("Opened database successfully")
+        c = db.cursor()
+        query = f"INSERT INTO board (id,title,content) VALUES (' {id} ',' {subject} ',' {content}')"
+        c.execute(query)
+        db.commit()
+        c.fetchall()
+    except Exception as e:
+        print('db error [insert_data_board()] : ', e)
+        db.rollback()
+        db.close()
+        return False
+    else:
+        db.close()
+        return True
+
 
 app = Flask(__name__)
 app.secret_key = 'this is secret key'
@@ -150,8 +174,8 @@ def logout():
 def homepage():
     # 게시판 등 로그아웃 구현
     userid = session.get('userid',None)
-    if 'username' in session:
-        flash("환영합니다! " + id + '님')
+    if 'userid' in session:
+        flash("환영합니다! " + userid + '님')
     return render_template('homepage.html', userid=userid)
 
 
@@ -182,7 +206,7 @@ def register():
         if not (id and pwd and name):
             flash("빈칸이 존재합니다")
             return redirect(url_for('register'))
-        if insert_data(id,pwd,name):
+        if insert_data_member(id,pwd,name):
             print('register Success!')
             return redirect(url_for('index'))
         else:
@@ -192,9 +216,12 @@ def register():
 
     return render_template('register.html', error=error)
 
-# board page
+# no filter board page
 @app.route('/board',methods=['GET'])
 def board():
+    if 'userid' not in session:
+        flash("로그인이 필요합니다!")
+        return redirect(url_for('index'))
     error = None
     # 세션으로 로그인 유저 아이디 저장
     id = session['userid']
@@ -220,8 +247,11 @@ def board():
     
     return render_template('board.html', error=error, name=id, data_list= data_list)
     
-@app.route('/board_view/<int:num>')
+@app.route('/board/<int:num>')
 def board_vew(num):
+    if 'userid' not in session:
+        flash("로그인이 필요합니다!")
+        return redirect(url_for('index'))
     post = read_post(num)
     if post == False:
         flash("해당 글은 존재하지 않습니다!")
@@ -236,8 +266,81 @@ def board_vew(num):
     print(post)
     print(post[3])
     print(type(post[3]))
-    return render_template('post_view.html',data = data_dic)
+    return render_template('board_view.html',data = data_dic)
+
+# 글 작성
+@app.route('/board/write',methods=['GET','POST'])
+def board_write():
+    if 'userid' not in session:
+        flash("로그인이 필요합니다!")
+        return redirect(url_for('index'))
+    id = session['userid']
+    if request.method == 'GET':
+        return render_template('board_write.html')
+    elif request.method=="POST":
+        subject = request.form['subject']
+        content = request.form['contents']
+        print("작성자 :",id,"\t 제목 :",subject,"\t 내용 :",content)
+        # ckeditor에서는 기본적으로 <script>를 넣을 못 넣게 되어 있음.
+        # <script>alert(1);</script> 를 넣을 경우 아래와 같은 방식으로 치환됨
+        # &lt;script&gt;alert(1);&lt;/script&gt;
+        # 따라서 html.unescape문을 통해 변환 후 db에 저장
+        unescape_subject = html.unescape(subject)
+        unescape_content = html.unescape(content)
+        if insert_data_board(id,unescape_subject,unescape_content):
+            print('글 작성 완료')
+        else:
+            flash("글 작성 오류!")
+        return redirect(url_for('board'))
+
+
+
+
+# low level filter board
+@app.route('/low_board',methods=['GET'])
+def low_board():
+    error = None
+    # 세션으로 로그인 유저 아이디 저장
+    id = session['userid']
+    conn = dbcon()
+    cursor = conn.cursor()
+    sql = "SELECT * FROM low_board ORDER BY reg_date desc"
+    cursor.execute(sql)
+    data = cursor.fetchall()
     
+    data_list = []
+    # id, title, content, reg_data
+    for obj in data:
+        data_dic = {
+            'num' : obj[0],
+            'id' : obj[1],
+            'title' : obj[2],
+            'content' : obj[3],
+            'time' : obj[4]
+        }
+        data_list.append(data_dic)
+    cursor.close()
+    conn.close()
+    
+    return render_template('low_board.html', error=error, name=id, data_list= data_list)
+    
+@app.route('/low_board/<int:num>')
+def low_board_vew(num):
+    post = read_post(num)
+    if post == False:
+        flash("해당 글은 존재하지 않습니다!")
+        return redirect(url_for('low_board'))
+    data_dic = {
+        'num' : post[0],
+        'id' : post[1],
+        'title' : post[2],
+        'content' : post[3],
+        'time' : post[4]
+    }
+    print(post)
+    print(post[3])
+    print(type(post[3]))
+    return render_template('low_board_view.html',data = data_dic)
 
 if __name__ == "__main__":
     #dbcon()
