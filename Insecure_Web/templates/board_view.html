@@ -51,7 +51,12 @@
             <td>{{data.content|safe}}<td>
         </tr>
     </table>
-
+    <form action="" method="post">  
+      <td style="width:10%">
+        <input type="hidden" class="form-control" name="idx" value="{{data.num}}">
+        <button class= "btn btn-link" type="submit">삭제</button>  
+      </td> 
+    </form>
 </body>
  
 </html>

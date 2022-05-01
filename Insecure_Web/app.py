@@ -43,15 +43,18 @@ def create_db():
         conn.close()
 
 # Register를 통해 DB에 데이터 삽입
-def insert_data_member(id, passwd, name):
+def insert_data_member(id, passwd, nickname):
     try:
         db = dbcon()
         c = db.cursor()
-        query = "INSERT INTO member VALUES ( '" + id + "','" + passwd + "','" + name + "')"
-        c.execute(query)
+        c.execute("INSERT INTO member (id,passwd,nickname) VALUES (%(id)s  ,  %(passwd)s,  %(nickname)s)",{
+            'id':id,
+            'passwd':passwd,
+            'nickname':nickname
+        })
         db.commit()
         c.fetchall()
-        print("Insert data() : id=" + id + "\tpassword = "+ passwd + "\tname = " + name)
+        print("Insert data() : id=" + id + "\tpassword = "+ passwd + "\tname = " + nickname)
     except Exception as e:
         print('db error [insert_data_member()] : ', e)
         db.rollback()
@@ -61,33 +64,6 @@ def insert_data_member(id, passwd, name):
         db.close()
         return True
 
-# 나중에 사용 예정
-def select_all():
-    ret = list()
-    try:
-        db = dbcon()
-        c = db.cursor()
-        c.execute('SELECT * FROM member')
-        ret = c.fetchall()
-    except Exception as e:
-        print('db error [select_all()] : ',e)
-    finally:
-        db.close()
-        return ret
-
-# 나중에 사용 예정
-def select_id(id):
-    ret = ()
-    try :
-        db = dbcon()
-        c = db.cursor()
-        c.execute('SELECT * FROM member WHERE id = ' + id)
-        ret = c.fetchall()
-    except Exception as e:
-        print('db error [selct_id()] : ',e)
-    finally:
-        db.close()
-        return ret
 
 # 로그인 시 id, passsword 확인 함수
 def check_passwd(id,input_passwd):
@@ -95,8 +71,7 @@ def check_passwd(id,input_passwd):
     try:
         db = dbcon()
         c = db.cursor()
-        query = f"SELECT id, passwd, nickname from member WHERE id='{id}' AND passwd = '{input_passwd}';"
-        c.execute(query)
+        c.execute("SELECT id, passwd from member WHERE id=%(id)s AND passwd =%(input_passwd)s ",(id,input_passwd))
         print("execute")
         
         rows = c.fetchall()
@@ -150,7 +125,52 @@ def insert_data_board(id, subject, content):
         db.close()
         return True
 
+# 글 삭제 함수
+def delete(idx):
+    try:
+        db = dbcon()
+        c = db.cursor()
+        query= f"DELETE FROM board WHERE num = {idx}"
+        print("1")
+        print(idx)
+        c.execute(query)
+        db.commit()
+        c.fetchall()
+        print("delete() : fetchall")
+    except Exception as e:
+        print('db error [delete_data_board()] : ',e)
+        db.rollback()
+        db.close()
+        return False
+    else:
+        db.close()
+        return True
 
+# 글 삭제 시 id 체크 함수
+def check_id(id,idx):
+    try:
+        if id == 'admin':
+            print("check_id : admin")
+            return True
+        db = dbcon()
+        c = db.cursor()
+        query= F"SELECT id FROM board WHERE num = {idx}"
+        c.execute(query)
+        value = c.fetchall()
+        for rs in value:
+            print("출력 id = ",rs[0],"\t 입력온 id = ",id)
+            db.close()
+            if rs[0] == id:
+                print("check_id : True")
+                return True
+            else:
+                print("check_id : False")
+                return False
+    except Exception as e:
+        print('db error [check_id()] : ',e)
+        db.close()
+        return False
+                
 app = Flask(__name__)
 app.secret_key = 'this is secret key'
 # 세션 지속 시간 10분
@@ -210,7 +230,7 @@ def register():
             print('register Success!')
             return redirect(url_for('index'))
         else:
-            flash(id + "가 존재합니다")
+            flash(id + "가 존재하거나 sql injection 시도가 있습니다")
             return redirect(url_for('register'))
 
 
@@ -247,11 +267,24 @@ def board():
     
     return render_template('board.html', error=error, name=id, data_list= data_list)
     
-@app.route('/board/<int:num>')
+@app.route('/board/<int:num>', methods=['GET','POST'])
 def board_vew(num):
     if 'userid' not in session:
         flash("로그인이 필요합니다!")
         return redirect(url_for('index'))
+    
+    id = session['userid']
+    
+    if request.method == 'POST':
+        idx = request.values.get('idx')
+        if check_id(id,idx):    
+            if delete(idx):
+                flash("삭제가 완료되었습니다!")
+                return redirect(url_for('board'))
+        else:
+            flash("글 쓴 id 또는 admin 계정으로만 삭제가 가능합니다.")
+            return redirect(url_for('board'))
+        
     post = read_post(num)
     if post == False:
         flash("해당 글은 존재하지 않습니다!")
@@ -343,7 +376,6 @@ def low_board_vew(num):
     return render_template('low_board_view.html',data = data_dic)
 
 if __name__ == "__main__":
-    #dbcon()
     create_db()
     app.run()
    
