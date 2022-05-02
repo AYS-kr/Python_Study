@@ -64,6 +64,20 @@ def insert_data_member(id, passwd, nickname):
         db.close()
         return True
 
+# id를 통한 정보 조회
+def select_id(id):
+    print("select_id() call")
+    ret = ()
+    try :
+        db = dbcon()
+        c = db.cursor()
+        c.execute('SELECT * FROM member WHERE id = ' + id)
+        ret = c.fetchall()
+    except Exception as e:
+        print('db error [selct_id()] : ',e)
+    finally:
+        db.close()
+        return ret
 
 # 로그인 시 id, passsword 확인 함수
 def check_passwd(id,input_passwd):
@@ -71,7 +85,7 @@ def check_passwd(id,input_passwd):
     try:
         db = dbcon()
         c = db.cursor()
-        c.execute("SELECT id, passwd from member WHERE id=%(id)s AND passwd =%(input_passwd)s ",(id,input_passwd))
+        c.execute("SELECT id, passwd from member WHERE id=:id AND passwd =:input_passwd ",{'id':id,'input_passwd':input_passwd})
         print("execute")
         
         rows = c.fetchall()
@@ -198,6 +212,15 @@ def homepage():
         flash("환영합니다! " + userid + '님')
     return render_template('homepage.html', userid=userid)
 
+# 회원정보 수정
+@app.route('/modify', methods=['GET','POST'])
+def modify():
+    if request.method == 'GET':
+        id = session.get('username')
+        row = select_id(id)
+        print(row)
+        for rs in row:
+            print(rs)
 
 # 로그인 화면
 @app.route('/login', methods=['GET','POST'])
