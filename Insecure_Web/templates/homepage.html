@@ -14,26 +14,38 @@
     <body>
       <div class=form-group>
         {%if userid%}
-          <strong>{{userid}}</strong>
+          <strong>ID : {{userid}}</strong>
+          <strong>name : {{nickname}}</strong>
+          <button type="button" onclick="location.href='/user_info/{{session["userid"]}}'"> 회원정보수정 </button>
           <button type="button" onclick="location.href='/logout'"> 로그아웃 </button>
+          {% if admin_check%}
+          <button type="button" onclick="location.href='/user/0'"> 회원 조회 </button>
+        {%else%}
+          <button type="button" onclick="location.href='/user/0'" hidden>회원 조회</button>
+        {%endif%}
           <p>
               <h1> This is Insecure Web Main Page</h1>
           </p>
           <strong> Nice to meet you {{userid}} </strong>
         </br>
         <p>
+          Proxy 사용해보기<br>
+          <a href="proxy">Proxy </a>
+        </p>
+        <p>
           No Filter 게시판으로 이동<br>
           <a href="board"> No Filter board  </a>
         </p>
         <p>
-          Low Level Filter 게시판으로 이동<br>
-          <a href="low_board"> Low Level Filter board  </a>
+          Filter 게시판으로 이동<br>
+          <a href="low_board"> Filter board  </a>
         </p>
 
         {%else%}
           <h1> You need to login! </h1>
           <a href="login">login page</a>
         {%endif%}
+        
       </div>
 
     </div>

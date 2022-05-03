@@ -1,7 +1,8 @@
 from datetime import timedelta
 import sys,os
+from time import sleep
 from tkinter import EXCEPTION
-from flask import Flask, render_template, redirect, url_for, request, flash, session
+from flask import Flask, make_response, render_template, redirect, url_for, request, flash, session
 import sqlite3
 import html
 
@@ -64,6 +65,23 @@ def insert_data_member(id, passwd, nickname):
         db.close()
         return True
 
+# 모든 id 조회
+def select_all_id():
+    print("select_all_id() call")
+    ret = ()
+    try :
+        db = dbcon()
+        c = db.cursor()
+        sql = 'SELECT * FROM member'
+        c.execute(sql)
+        ret = c.fetchall()
+    except Exception as e:
+        print('db error [selct_all_id()] : ',e)
+    finally:
+        db.close()
+        return ret
+    
+    
 # id를 통한 정보 조회
 def select_id(id):
     print("select_id() call")
@@ -71,7 +89,8 @@ def select_id(id):
     try :
         db = dbcon()
         c = db.cursor()
-        c.execute('SELECT * FROM member WHERE id = ' + id)
+        sql = 'SELECT * FROM member WHERE id = ?'
+        c.execute(sql,(id,))
         ret = c.fetchall()
     except Exception as e:
         print('db error [selct_id()] : ',e)
@@ -79,13 +98,45 @@ def select_id(id):
         db.close()
         return ret
 
+# id를 통해 작성한 글 확인
+def select_board(id):
+    print("select_board() call")
+    ret =()
+    try :
+        db = dbcon()
+        c = db.cursor()
+        sql = 'SELECT * FROM board WHERE id = ?'
+        c.execute(sql,(id,))
+        ret = c.fetchall()
+    except Exception as e:
+        print('db error [selct_board()] : ',e)
+    finally:
+        db.close()
+        return ret
+
+# 모든 글 조회
+def select_all_board():
+    print("select_all_board() call")
+    ret = ()
+    try :
+        db = dbcon()
+        c = db.cursor()
+        sql = 'SELECT * FROM board'
+        c.execute(sql)
+        ret = c.fetchall()
+    except Exception as e:
+        print('db error [selct_all_board()] : ',e)
+    finally:
+        db.close()
+        return ret   
+    
 # 로그인 시 id, passsword 확인 함수
 def check_passwd(id,input_passwd):
     print("check_passwd call")
     try:
         db = dbcon()
         c = db.cursor()
-        c.execute("SELECT id, passwd from member WHERE id=:id AND passwd =:input_passwd ",{'id':id,'input_passwd':input_passwd})
+        c.execute("SELECT id, passwd, nickname from member WHERE id=:id AND passwd =:input_passwd ",{'id':id,'input_passwd':input_passwd})
         print("execute")
         
         rows = c.fetchall()
@@ -96,12 +147,30 @@ def check_passwd(id,input_passwd):
             print(id,'의 비밀번호는 ', rs[1],'입니다')
             if id == rs[0] and input_passwd == rs[1]:
                 print("login Success")
-                return True
+                return rs[2]
             else:
                 print("login failed")
-                return False
+                return None
     except Exception as e:
         print('db error [check_passwd()] : ',e)
+        
+# 회원정보 수정 함수
+def update_member(id,new_pass,new_name):
+    try:
+        print('update_memeber() call')
+        db = dbcon()
+        c = db.cursor()
+        sql = 'UPDATE member SET passwd = ? , nickname = ? WHERE id = ?'
+        c.execute(sql,(new_pass,new_name,id))
+        db.commit()
+    except Exception as e:
+        print('db error [upsdate_member()] : ',e)
+        db.rollback()
+        db.close()
+        return False
+    else:
+        db.close()
+        return True
 
 # 글 읽기
 def read_post(num):
@@ -126,7 +195,7 @@ def insert_data_board(id, subject, content):
         db = dbcon()
         print ("Opened database successfully")
         c = db.cursor()
-        query = f"INSERT INTO board (id,title,content) VALUES (' {id} ',' {subject} ',' {content}')"
+        query = f"INSERT INTO board (id,title,content) VALUES ('{id}','{subject}','{content}')"
         c.execute(query)
         db.commit()
         c.fetchall()
@@ -206,21 +275,12 @@ def logout():
 # 로그인 후 첫 페이지
 @app.route('/homepage')
 def homepage():
-    # 게시판 등 로그아웃 구현
     userid = session.get('userid',None)
-    if 'userid' in session:
-        flash("환영합니다! " + userid + '님')
-    return render_template('homepage.html', userid=userid)
-
-# 회원정보 수정
-@app.route('/modify', methods=['GET','POST'])
-def modify():
-    if request.method == 'GET':
-        id = session.get('username')
-        row = select_id(id)
-        print(row)
-        for rs in row:
-            print(rs)
+    nickname = session.get('nickname')
+    admin_check = False
+    if userid == 'admin':
+        admin_check = True
+    return render_template('homepage.html', userid=userid, nickname = nickname, admin_check = admin_check)
 
 # 로그인 화면
 @app.route('/login', methods=['GET','POST'])
@@ -228,8 +288,10 @@ def login():
     if request.method == 'POST':
         id = request.form.get('username')
         passwd = request.form.get('password')
-        if check_passwd(id,passwd):
+        nickname = check_passwd(id,passwd)
+        if nickname != None:
             session['userid'] = id
+            session['nickname'] = nickname
             return redirect(url_for('homepage'))
         else:
             flash('정보가 틀립니다')
@@ -237,6 +299,82 @@ def login():
     elif request.method == 'GET':
         return render_template('login.html')
     return render_template('login.html')
+
+# 회원정보 조회
+@app.route('/user/<username>',methods=['GET'])
+def check(username):
+    if username == '0':
+        member_row = select_all_id()
+        user_data_list = []
+        for obj in member_row:
+            data_dic = {
+                'id' : obj[0],
+                'passwd' : obj[1],
+                'nickname' : obj[2]
+            }
+            user_data_list.append(data_dic)
+        board_row = select_all_board()
+        board_data_list = []
+        for obj in board_row:
+            data_dic = {
+                'num' : obj[0],
+                'id' : obj[1],
+                'title' : obj[2],
+                'reg_date' : obj[4]
+            }
+            board_data_list.append(data_dic)    
+        return render_template('user.html',user=user_data_list,board=board_data_list)
+    
+    id = session.get('userid')
+    if username != id and id != 'admin':
+        flash("권한이 없습니다!")
+        return redirect(url_for('homepage'))
+    
+    member_row = select_id(username)
+    user_data_list = []
+    for obj in member_row:
+        data_dic = {
+            'id' : obj[0],
+            'passwd' : '*'* len(obj[1]),
+            'nickname' : obj[2]
+        }
+        user_data_list.append(data_dic)
+    print(user_data_list)
+    board_row = select_board(username)
+    board_data_list = []
+    for obj in board_row:
+        data_dic = {
+            'num' : obj[0],
+            'id' : obj[1],
+            'title' : obj[2],
+            'reg_date' : obj[4]
+        }
+        board_data_list.append(data_dic)
+    print(board_data_list)
+    return render_template('user.html',user=user_data_list,board=board_data_list,data=username)
+    
+# 회원정보 수정
+@app.route('/user_info/<username>', methods=['GET','POST'])
+def modify(username):
+    if request.method == 'GET':
+        id = username
+        if id:
+            row = select_id(id)
+            print(row)
+            for rs in row:
+                print(rs)
+                print(rs[0])
+                print(rs[1])
+            return render_template('/user_info.html',id=id)
+        else:
+            return redirect(url_for('login'))
+    if request.method == 'POST':
+        modify_id = request.form['id']
+        new_password = request.form['New_passwd']
+        new_name = request.form['New_nick_name']
+        if update_member(modify_id,new_password,new_name):
+            print("Update!")
+        return redirect(url_for('homepage'))
 
 # 회원가입 화면
 @app.route('/register',methods=['GET','POST'])
@@ -249,6 +387,9 @@ def register():
         if not (id and pwd and name):
             flash("빈칸이 존재합니다")
             return redirect(url_for('register'))
+        if len(id) < 4:
+            flash("ID를 4자 이상으로 해주세요!")
+            return redirect(url_for('register'))
         if insert_data_member(id,pwd,name):
             print('register Success!')
             return redirect(url_for('index'))
@@ -259,6 +400,25 @@ def register():
 
     return render_template('register.html', error=error)
 
+
+
+
+# Proxy 사용해보기 [쿠키 값 변경 해보기]
+@app.route('/proxy',methods=['GET','POST'])
+def proxy():
+    if request.method == 'POST':
+        print("post")
+        data = make_response(render_template('proxy.html'))
+        data.set_cookie("cookie",'cookie')
+        return data
+    else:
+        print("get")
+        set_cookie = False
+        data = request.cookies.get('cookie')
+        if data:
+            set_cookie = True
+        return render_template('proxy.html',cookie = set_cookie, data = data)
+        
 # no filter board page
 @app.route('/board',methods=['GET'])
 def board():
@@ -289,15 +449,14 @@ def board():
     conn.close()
     
     return render_template('board.html', error=error, name=id, data_list= data_list)
-    
+
+# no filter board view  
 @app.route('/board/<int:num>', methods=['GET','POST'])
 def board_vew(num):
     if 'userid' not in session:
         flash("로그인이 필요합니다!")
         return redirect(url_for('index'))
-    
     id = session['userid']
-    
     if request.method == 'POST':
         idx = request.values.get('idx')
         if check_id(id,idx):    
@@ -337,6 +496,7 @@ def board_write():
         subject = request.form['subject']
         content = request.form['contents']
         print("작성자 :",id,"\t 제목 :",subject,"\t 내용 :",content)
+        print("fdsafdsafdas"+id+"fdasfdas")
         # ckeditor에서는 기본적으로 <script>를 넣을 못 넣게 되어 있음.
         # <script>alert(1);</script> 를 넣을 경우 아래와 같은 방식으로 치환됨
         # &lt;script&gt;alert(1);&lt;/script&gt;

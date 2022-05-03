@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:float="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Insecure Web - Home</title>
+    <style>
+        table.type09 {
+            border-collapse: collapse;
+            text-align: left;
+            line-height: 1.5;
+          }
+          table.type09 thead th {
+            padding: 10px;
+            font-weight: bold;
+            vertical-align: top;
+            color: #369;
+            border-bottom: 3px solid #036;
+          }
+          table.type09 tbody th {
+            width: 150px;
+            padding: 10px;
+            font-weight: bold;
+            vertical-align: top;
+            border-bottom: 1px solid #ccc;
+            background: #f3f6f7;
+          }
+          table.type09 td {
+            width: 350px;
+            padding: 10px;
+            vertical-align: top;
+            border-bottom: 1px solid #ccc;
+          }
+</style>
+</head>
+ 
+<body>
+  <!-- 네비게이션바 -->
+    <ul>
+      <li>        <a href="{{url_for('homepage')}}">Home</a>      </li>
+      <li>        <button type="button" onclick="location.href='/logout'"> 로그아웃 </button>      </li>
+      <li>        <button type="button" onclick="location.href='/user_info/{{username}}'"> 정보 수정 </button>      </li>
+    </ul>
+    <strong>{{data|safe}} 회원 정보</strong>
+    <table class="type09">
+        <tr>
+            <th>ID</th>
+            <th>password</th>
+            <th>nickname</th>
+        </tr>
+        {% for obj in user%}
+        <tbody>
+            <tr>
+                <td>{{obj.id}}</td>
+                <td>{{obj.passwd}}</td>
+                <td>{{obj.nickname}}</a></td>
+            </tr>
+        </tbody>
+        {% endfor %}
+    </table>
+    <strong> 쓴 글</strong>
+    <table class="type09">
+        <tr>
+            <th>글번호</th>
+            <th>작성자</th>
+            <th>제목</th>
+            <th>작성시간</th>
+        </tr>
+        {% for obj in board%}
+        <tbody>
+            <tr>
+                <td>{{obj.num}}</td>
+                <td>{{obj.id}}</td>
+                <td><a href="/board/{{obj.num}}">{{obj.title}}</a></td>
+                <td>{{obj.reg_date}}</td>
+            </tr>
+        </tbody>
+        {% endfor %}
+    </table>
+</body>
+ 
+</html>

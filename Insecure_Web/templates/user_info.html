@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8">
+        <title>Insecure_Web/user_info.html</title>
+    </head>
+    <body>
+        <form action="/user_info/{{id}}" method="post">
+            <input type="hidden" name="idx" value="{{edit_idx}}">
+            <hr>
+            <p>회원정보 수정</p>
+            <hr>
+            ID : <input type="text" name="id" value="{{session.get('userid')}}"readonly><br>
+            New Password : <input type="paswrod" name="New_passwd"><br>
+            Nick name : <input type="text" value="{{edit_nick_name}}" name="New_nick_name"><br>
+            <input type="submit" value="수정">
+            <input type="button" value="취소" onclick="location.href='/homepage'">
+        </form>
+    </body>
+</html> 

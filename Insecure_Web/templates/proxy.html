@@ -1,0 +1,29 @@
+<!DOCTYPE html
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Welcome to Insecure Web!</title>
+    </head>
+    <body>
+        <button type="button" onclick="location.href='/homepage'"> 돌아가기 </button>
+        <strong> proxy툴이나 chrome, firefox 확장 프로그램을 이용하여 쿠키 값 변경<br>
+            cookie 값을 CERT-IS로 변경
+        </strong>
+        <form adction="/setcookie" method="POST">
+            <p><button type ='submit' name="cookie">쿠키 생성</button></p>
+        </form>
+        <form adction="/setcookie" method="GET">
+            <p><button type ='submit'>확인</button></p>
+        </form>
+        {%if cookie%}
+            {%if data=='CERT-IS'%}
+            <strong> 쿠키 변경 성공!!!</strong>
+            {% else %}
+                <strong> 쿠키를 CERT-IS로 변경하세요</strong>
+            {%endif%}
+        {%endif%}
+
+
+       
+    </body>
+</html>
