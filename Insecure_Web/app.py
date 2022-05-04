@@ -16,7 +16,7 @@ def create_db():
         conn = dbcon()
         print ("Opened database successfully")
         c = conn.cursor()
-        c.execute('CREATE TABLE IF NOT EXISTS member (id varchar(50) PRIMARY KEY NOT NULL, passwd varchar(50) NOT NULL, nickname varchar(50) NOT NULL)')
+        c.execute('CREATE TABLE IF NOT EXISTS member (id varchar(50)  UNIQUE NOT NULL, passwd varchar(50) NOT NULL, nickname varchar(50) NOT NULL, idx integer PRIMARY KEY autoincrement)')
         print ("'member' Table created successfully")
         query = '''CREATE TABLE IF NOT EXISTS board (
         num INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,7 +25,9 @@ def create_db():
         reg_date DATETIME DEFAULT (datetime('now','localtime'))) '''
         c.execute(query)
         print ("'board' Table created successfully")
-        c.execute("INSERT INTO member VALUES ( 'admin', 'admin','admin')")
+        c.execute("INSERT INTO member (id,passwd,nickname) VALUES ( 'admin', 'admin','admin')")
+        c.execute("INSERT INTO member (id,passwd,nickname) VALUES ( 'HELLO', 'test','Hello')")
+        c.execute("INSERT INTO member (id,passwd,nickname) VALUES ( 'test', 'test','test')")
         print ("Insert Admin")
         c.execute("INSERT INTO board (id,title,content) VALUES ('HELLO','THIS_IS','TEST_CONTENT')")
         c.execute("INSERT INTO board (id,title,content) VALUES ('HELLO','THIS_IS','TEST_CONTENT')")
@@ -83,6 +85,22 @@ def select_all_id():
     
     
 # id를 통한 정보 조회
+def select_idx(idx):
+    print("select_idx() call")
+    ret = ()
+    try :
+        db = dbcon()
+        c = db.cursor()
+        sql = 'SELECT * FROM member WHERE idx = ?'
+        c.execute(sql,(idx,))
+        ret = c.fetchall()
+    except Exception as e:
+        print('db error [selct_idx()] : ',e)
+    finally:
+        db.close()
+        return ret
+
+# id를 통한 정보 조회
 def select_id(id):
     print("select_id() call")
     ret = ()
@@ -136,18 +154,22 @@ def check_passwd(id,input_passwd):
     try:
         db = dbcon()
         c = db.cursor()
-        c.execute("SELECT id, passwd, nickname from member WHERE id=:id AND passwd =:input_passwd ",{'id':id,'input_passwd':input_passwd})
+        c.execute("SELECT * from member WHERE id=:id AND passwd =:input_passwd ",{'id':id,'input_passwd':input_passwd})
         print("execute")
         
         rows = c.fetchall()
         print("fetchall")
-        print("입력한 id = ",id,"입력한 password = ",input_passwd)
+        print("입력한 id = ["+id+"]입력한 password = ["+input_passwd+"]")
         # 쿼리 결과문이 리스트로 나오기에 for문
         for rs in rows:
-            print(id,'의 비밀번호는 ', rs[1],'입니다')
+            print(id,'의 비밀번호는 ['+ rs[1]+']입니다')
             if id == rs[0] and input_passwd == rs[1]:
                 print("login Success")
-                return rs[2]
+                li=[]
+                li.append(rs[2])
+                li.append(rs[3])
+                print(li)
+                return li
             else:
                 print("login failed")
                 return None
@@ -269,6 +291,8 @@ def index():
 def logout():
     # logout and redirect ro index page
     session.pop("userid",None)
+    session.pop("idx",None)
+    session.pop("nickname",None)
     flash("로그아웃 완료")
     return redirect(url_for('index'))
 
@@ -286,12 +310,17 @@ def homepage():
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
+        if session.get('userid'):
+            session.pop('userid')
+            session.pop('nickname')
+            session.pop('idx')
         id = request.form.get('username')
         passwd = request.form.get('password')
-        nickname = check_passwd(id,passwd)
-        if nickname != None:
+        li = check_passwd(id,passwd)
+        if li != None:
             session['userid'] = id
-            session['nickname'] = nickname
+            session['nickname'] = li[0]
+            session['idx'] = li[1]
             return redirect(url_for('homepage'))
         else:
             flash('정보가 틀립니다')
@@ -301,16 +330,17 @@ def login():
     return render_template('login.html')
 
 # 회원정보 조회
-@app.route('/user/<username>',methods=['GET'])
-def check(username):
-    if username == '0':
+@app.route('/user/<int:find_idx>',methods=['GET'])
+def check(find_idx):
+    if find_idx == 0:
         member_row = select_all_id()
         user_data_list = []
         for obj in member_row:
             data_dic = {
                 'id' : obj[0],
                 'passwd' : obj[1],
-                'nickname' : obj[2]
+                'nickname' : obj[2],
+                'idx' : obj[3]
             }
             user_data_list.append(data_dic)
         board_row = select_all_board()
@@ -326,11 +356,13 @@ def check(username):
         return render_template('user.html',user=user_data_list,board=board_data_list)
     
     id = session.get('userid')
-    if username != id and id != 'admin':
+    idx = session.get('idx')
+    if find_idx != idx and id != 'admin':
         flash("권한이 없습니다!")
         return redirect(url_for('homepage'))
     
-    member_row = select_id(username)
+    member_row = select_idx(find_idx)
+    member2board = None
     user_data_list = []
     for obj in member_row:
         data_dic = {
@@ -339,8 +371,9 @@ def check(username):
             'nickname' : obj[2]
         }
         user_data_list.append(data_dic)
+        member2board = obj[0]
     print(user_data_list)
-    board_row = select_board(username)
+    board_row = select_board(member2board)
     board_data_list = []
     for obj in board_row:
         data_dic = {
@@ -351,7 +384,7 @@ def check(username):
         }
         board_data_list.append(data_dic)
     print(board_data_list)
-    return render_template('user.html',user=user_data_list,board=board_data_list,data=username)
+    return render_template('user.html',user=user_data_list,board=board_data_list,data=find_idx)
     
 # 회원정보 수정
 @app.route('/user_info/<username>', methods=['GET','POST'])
@@ -361,11 +394,13 @@ def modify(username):
         if id:
             row = select_id(id)
             print(row)
+            modify_id = None
             for rs in row:
                 print(rs)
                 print(rs[0])
                 print(rs[1])
-            return render_template('/user_info.html',id=id)
+                modify_id = rs[0]
+            return render_template('/user_info.html',id=id,modify_id=modify_id)
         else:
             return redirect(url_for('login'))
     if request.method == 'POST':
@@ -427,7 +462,8 @@ def board():
         return redirect(url_for('index'))
     error = None
     # 세션으로 로그인 유저 아이디 저장
-    id = session['userid']
+    id = session.get('userid')
+    idx = session.get('idx',None)
     conn = dbcon()
     cursor = conn.cursor()
     sql = "SELECT * FROM board ORDER BY reg_date desc"
@@ -448,7 +484,7 @@ def board():
     cursor.close()
     conn.close()
     
-    return render_template('board.html', error=error, name=id, data_list= data_list)
+    return render_template('board.html', error=error, name=id, data_list= data_list,idx=idx)
 
 # no filter board view  
 @app.route('/board/<int:num>', methods=['GET','POST'])

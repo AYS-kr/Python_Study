@@ -46,13 +46,15 @@
             <th>ID</th>
             <th>password</th>
             <th>nickname</th>
+            <th>idx</th>
         </tr>
         {% for obj in user%}
         <tbody>
             <tr>
                 <td>{{obj.id}}</td>
                 <td>{{obj.passwd}}</td>
-                <td>{{obj.nickname}}</a></td>
+                <td>{{obj.nickname}}</td>
+                <td>{{obj.idx}}</a></td>
             </tr>
         </tbody>
         {% endfor %}
