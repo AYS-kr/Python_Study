@@ -37,7 +37,7 @@ def create_db():
         c.execute("INSERT INTO board (id,title,content) VALUES ('HELLO','THIS_IS','TEST_CONTENT')")
         c.execute("INSERT INTO board (id,title,content) VALUES ('HELLO','THIS_IS','TEST_CONTENT')")
         c.execute("INSERT INTO board (id,title,content) VALUES ('HELLO','THIS_IS','TEST_CONTENT')")
-        c.execute("INSERT INTO board (id,title,content) VALUES ('Java','script','<script>alert(1);</script>')")
+        c.execute("INSERT INTO board (id,title,content) VALUES ('test','script','<script>alert(1);</script>')")
         print("Insert Test data")
         conn.commit()
     except Exception as e:
