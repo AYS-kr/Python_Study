@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Insecure Web - post_view</title>
+    <style type="text/css">
+        table.type09 {
+            border-collapse: collapse;
+            text-align: left;
+            line-height: 1.5;
+          }
+          table.type09 thead th {
+            padding: 10px;
+            font-weight: bold;
+            vertical-align: top;
+            color: #369;
+            border-bottom: 3px solid #036;
+          }
+          table.type09 tbody th {
+            width: 150px;
+            padding: 10px;
+            font-weight: bold;
+            vertical-align: top;
+            border-bottom: 1px solid #ccc;
+            background: #f3f6f7;
+          }
+          table.type09 td {
+            width: 350px;
+            padding: 10px;
+            vertical-align: top;
+            border-bottom: 1px solid #ccc;
+          }
+    </style>
+</head>
+ 
+<body>
+  <ul>
+    <li>        <a href="{{url_for('homepage')}}">Home</a>      </li>
+    <li>        <button type="button" onclick="history.go(-1)"> 이전페이지 </button>      </li>
+  </ul>
+    <table class="type09">
+    <th colspan=3>{{data.num}}번 글</td>
+        <tr>
+            <th scope="row">제목</th>
+            <th scope="row">작성자</th>
+            <th scope="row">작성 시간</th>
+        </tr>
+        <tr>
+            <td>{{data.title}}</td>
+            <td>{{data.id}}</td>
+            <td>{{data.time}}</td>
+        </tr>
+        <tr>
+            <td>내용</td>
+            <td>{{data.content|safe}}<td>
+        </tr>
+    </table>
+    <form action="" method="post">  
+      <td style="width:10%">
+        <input type="hidden" class="form-control" name="idx" value="{{data.num}}">
+        <button class= "btn btn-link" type="submit">삭제</button>  
+      </td> 
+    </form>
+</body>
+ 
+</html>

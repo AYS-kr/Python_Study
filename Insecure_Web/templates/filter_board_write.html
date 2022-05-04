@@ -20,7 +20,16 @@
 <body>
     <div class="container">
         <h3>포스트 작성하기</h3>
-        <form name="ckeditor" method="POST" action="/board/write" id="write">
+        <form name="ckeditor" method="POST" action="/filter_board/write" id="write">
+            <!-- 쉬움 : replace('script','') -->
+            <!-- 보통 : replace('\<(.*)s(.*)c(.*)r(.*)i(.*)p(.*)t(.*)\i','') -->
+            <!-- 어려움 : replace('(','') replace(')','') -->
+            필터 수준
+            <select name="level">
+                <option value="easy">쉬움</option>
+                <option value="normal">보통</option>
+                <option value="hard">어려움</option>
+            </select>
             <div class="form-group">
                 <label for="title">제목</label>
                 <input type="text" id="subject" name="subject" class="form-control" placeholder="제목을 입력하세요">

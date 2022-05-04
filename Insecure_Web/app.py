@@ -532,7 +532,6 @@ def board_write():
         subject = request.form['subject']
         content = request.form['contents']
         print("작성자 :",id,"\t 제목 :",subject,"\t 내용 :",content)
-        print("fdsafdsafdas"+id+"fdasfdas")
         # ckeditor에서는 기본적으로 <script>를 넣을 못 넣게 되어 있음.
         # <script>alert(1);</script> 를 넣을 경우 아래와 같은 방식으로 치환됨
         # &lt;script&gt;alert(1);&lt;/script&gt;
@@ -544,19 +543,21 @@ def board_write():
         else:
             flash("글 작성 오류!")
         return redirect(url_for('board'))
-
-
-
-
-# low level filter board
-@app.route('/low_board',methods=['GET'])
-def low_board():
+    
+###### Filter board
+# Filter board page
+@app.route('/filter_board',methods=['GET'])
+def filter_board():
+    if 'userid' not in session:
+        flash("로그인이 필요합니다!")
+        return redirect(url_for('index'))
     error = None
     # 세션으로 로그인 유저 아이디 저장
-    id = session['userid']
+    id = session.get('userid')
+    idx = session.get('idx',None)
     conn = dbcon()
     cursor = conn.cursor()
-    sql = "SELECT * FROM low_board ORDER BY reg_date desc"
+    sql = "SELECT * FROM board ORDER BY reg_date desc"
     cursor.execute(sql)
     data = cursor.fetchall()
     
@@ -574,14 +575,29 @@ def low_board():
     cursor.close()
     conn.close()
     
-    return render_template('low_board.html', error=error, name=id, data_list= data_list)
-    
-@app.route('/low_board/<int:num>')
-def low_board_vew(num):
+    return render_template('filter_board.html', error=error, name=id, data_list= data_list,idx=idx)
+
+# filter board view  
+@app.route('/filter_board/<int:num>', methods=['GET','POST'])
+def filter_board_vew(num):
+    if 'userid' not in session:
+        flash("로그인이 필요합니다!")
+        return redirect(url_for('index'))
+    id = session['userid']
+    if request.method == 'POST':
+        idx = request.values.get('idx')
+        if check_id(id,idx):    
+            if delete(idx):
+                flash("삭제가 완료되었습니다!")
+                return redirect(url_for('filter_board'))
+        else:
+            flash("글 쓴 id 또는 admin 계정으로만 삭제가 가능합니다.")
+            return redirect(url_for('filter_board'))
+        
     post = read_post(num)
     if post == False:
         flash("해당 글은 존재하지 않습니다!")
-        return redirect(url_for('low_board'))
+        return redirect(url_for('filter_board'))
     data_dic = {
         'num' : post[0],
         'id' : post[1],
@@ -592,7 +608,68 @@ def low_board_vew(num):
     print(post)
     print(post[3])
     print(type(post[3]))
-    return render_template('low_board_view.html',data = data_dic)
+    return render_template('filter_board_view.html',data = data_dic)
+
+# Flietr 글 작성
+@app.route('/filter_board/write',methods=['GET','POST'])
+def filter_board_write():
+    if 'userid' not in session:
+        flash("로그인이 필요합니다!")
+        return redirect(url_for('index'))
+    id = session['userid']
+    if request.method == 'GET':
+        return render_template('filter_board_write.html')
+    elif request.method=="POST":
+        subject = request.form['subject']
+        content = request.form['contents']
+        level = request.form['level']
+        # ckeditor에서는 기본적으로 <script>를 넣을 못 넣게 되어 있음.
+        # <script>alert(1);</script> 를 넣을 경우 아래와 같은 방식으로 치환됨
+        # &lt;script&gt;alert(1);&lt;/script&gt;
+        # 따라서 html.unescape문을 통해 변환 후 db에 저장
+        unescape_content = html.unescape(content)
+        if level == 'easy':
+            unescape_content = unescape_content.replace('script','')
+        elif level == 'normal':
+            unescape_content = unescape_content.replace('\<(.*)s(.*)c(.*)r(.*)i(.*)p(.*)t(.*)\i','')
+            print(unescape_content)
+        else:
+            unescape_content = unescape_content.replace('(','')
+            unescape_content = unescape_content.replace(')','')
+        if insert_data_board(id,subject,unescape_content):
+            print('글 작성 완료')
+        else:
+            flash("글 작성 오류!")
+        return redirect(url_for('filter_board'))
+
+
+
+
+# SQLI test 페이지
+@app.route('/sqli_test',methods=['GET','POST'])
+def sqli_test():
+    error = None
+    id_text = ""
+    if request.method == "POST":
+        id_text = request.form["idText"]
+        id_text = id_text.replace('admin','')
+        id_text = id_text.replace('admin','')
+        id_text = id_text.replace('admin','')
+    
+    search_id_sql = "select id, passwd, nickname, idx from member where id = '" + id_text + "'"
+    db = dbcon()
+    c = db.cursor()
+    try:
+        c.execute(search_id_sql)
+    except Exception as e:
+        error = e
+    id_rows = c.fetchall()
+
+    return render_template("sql_injection.html", id_rows = id_rows,
+        search_text = id_text, sql_query = search_id_sql,error=error)
+
+
+
 
 if __name__ == "__main__":
     create_db()

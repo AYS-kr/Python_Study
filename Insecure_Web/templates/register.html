@@ -40,19 +40,19 @@
     var f = document.getElementById("joinform");
     f.addEventListener("submit" , function(e) {
       if(f.id.value.length == 0 ) {
-        alert("Please enter your ID");
+        alert("빈칸 금지!");
         e.preventDefault();
         f.id.focus();
         return;
       }
       if(f.nickname.value.length == 0 ) {
-        alert("Please enter your Nickname");
+        alert("빈칸 금지!");
         e.preventDefault();
         f.nickname.focus();
         return;
       }
       if(f.password.value.length == 0 ) {
-        alert("Please enter your Password");
+        alert("빈칸 금지!");
         e.preventDefault();
         f.password.focus();
         return;
