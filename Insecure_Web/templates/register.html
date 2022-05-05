@@ -8,6 +8,8 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
+       <!-- Bootstrap core css -->
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css">
         <meta charset="UTF-8">
         <title>Insecure Web Register</title>
     </head>
@@ -16,22 +18,28 @@
             <div>
                 <h3> Register</h3>
                 <p>
-                  웹 해킹 용 사이트 이므로 간단한 id,password nickname 사용!
-                </br>참고! sql injection 시도 불가
+                  웹 해킹용 사이트이므로 간단한 id,password nickname 사용!
+                <br>참고! sql injection 시도 불가
                 </p>
                 <p>
+                  <div class="form-group">
                     <label for="regi_id">ID&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</label>
                     <input type="text" class="form-control" id="id" name="reg_id">
+                  </div>
                 </p>
                 <p>
+                  <div class="form-group">
                     <label for="reg_nickname">Nick Name&nbsp</label>
                     <input type="text"class="form-control"  id="nickname" name="name">
+                  </div>
                 </p>
                 <p>
+                  <div class="form-group">
                     <label for="regi_pw">PW&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</label>
                     <input type="password" class="form-control" id="password" name="reg_passwd">
+                  </div>
                 </p>
-                <button type="submit" name="submit" value="submit" style="WIDTH: 183pt">submit</button>
+                <button type="submit" name="submit" value="submit" class="btn btn-primary" style="WIDTH: 183pt">submit</button>
             </div>
         </form>
     </body>

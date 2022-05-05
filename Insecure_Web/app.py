@@ -50,11 +50,14 @@ def insert_data_member(id, passwd, nickname):
     try:
         db = dbcon()
         c = db.cursor()
-        c.execute("INSERT INTO member (id,passwd,nickname) VALUES (%(id)s  ,  %(passwd)s,  %(nickname)s)",{
-            'id':id,
-            'passwd':passwd,
-            'nickname':nickname
-        })
+        # data_list = [(id,passwd,nickname)]
+        # sql = "INSERT INTO member (id,passwd,nickname) VALUES (?,?,?)"
+        c.execute("INSERT INTO member (id,passwd,nickname) VALUES (?  ,  ?,  ?)",(
+            id,
+            passwd,
+            nickname)
+        )
+        #c.execute(sql,data_list)
         db.commit()
         c.fetchall()
         print("Insert data() : id=" + id + "\tpassword = "+ passwd + "\tname = " + nickname)
@@ -652,6 +655,7 @@ def sqli_test():
     id_text = ""
     if request.method == "POST":
         id_text = request.form["idText"]
+        print(id_text)
         id_text = id_text.replace('admin','')
         id_text = id_text.replace('admin','')
         id_text = id_text.replace('admin','')
